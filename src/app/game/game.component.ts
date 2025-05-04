@@ -1,6 +1,8 @@
 import { PlayScene } from '../scenes/play.scene';
 import { Component, OnInit } from '@angular/core';
 import Phaser from 'phaser';
+import { StartScene } from '../scenes/start.scene';
+import { GameOverScene } from '../scenes/gameover.scene';
 
 @Component({
   selector: 'app-game',
@@ -20,7 +22,7 @@ export class GameComponent implements OnInit {
       height: innerHeight,
       backgroundColor: '#2222aa',
       parent: 'game-container',
-      scene: [PlayScene],
+      scene: [StartScene, PlayScene, GameOverScene],
       physics: {
         default: 'arcade'
       }

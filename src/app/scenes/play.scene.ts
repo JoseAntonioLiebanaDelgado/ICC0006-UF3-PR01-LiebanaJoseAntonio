@@ -1,30 +1,27 @@
-
 // Importamos Phaser
 import Phaser from 'phaser';
 
-// Creamos una clase que extiende de Phaser.Scene
 export class PlayScene extends Phaser.Scene {
 
     // Sprite del jugador (la nave)
     player!: Phaser.Physics.Arcade.Sprite;
 
-    // Controles del teclado (flechas)
+    // Controles del teclado
     cursors!: Phaser.Types.Input.Keyboard.CursorKeys;
-
-    // Tecla para disparar (espacio)
     spaceKey!: Phaser.Input.Keyboard.Key;
 
-    // Grupo de balas
-    bullets!: Phaser.Physics.Arcade.Group;
+    // Teclas pausa/reanudar
+    pauseKey!: Phaser.Input.Keyboard.Key;
+    resumeKey!: Phaser.Input.Keyboard.Key;
 
-    // Grupo de asteroides
+    // Grupos
+    bullets!: Phaser.Physics.Arcade.Group;
     asteroids!: Phaser.Physics.Arcade.Group;
 
     // Puntuación
     score: number = 0;
     scoreText!: Phaser.GameObjects.Text;
 
-    // Máxima puntuación
     highScore: number = 0;
     highScoreText!: Phaser.GameObjects.Text;
 
@@ -48,7 +45,6 @@ export class PlayScene extends Phaser.Scene {
             this.scale.height - 100,
             'player'
         );
-
         this.player.setScale(0.5);
         this.player.setCollideWorldBounds(true);
 
@@ -57,19 +53,17 @@ export class PlayScene extends Phaser.Scene {
         //-------------------------------------
         this.cursors = this.input.keyboard!.createCursorKeys();
         this.spaceKey = this.input.keyboard!.addKey(Phaser.Input.Keyboard.KeyCodes.SPACE);
+        this.pauseKey = this.input.keyboard!.addKey(Phaser.Input.Keyboard.KeyCodes.P);
+        this.resumeKey = this.input.keyboard!.addKey(Phaser.Input.Keyboard.KeyCodes.R);
 
         //-------------------------------------
-        // GRUPO DE BALAS
+        // GRUPOS
         //-------------------------------------
         this.bullets = this.physics.add.group({
             defaultKey: 'bullet',
-            maxSize: 10,
-            runChildUpdate: true // 👈 IMPORTANTE para reciclar bien las balas
+            maxSize: 10
         });
 
-        //-------------------------------------
-        // GRUPO DE ASTEROIDES
-        //-------------------------------------
         this.asteroids = this.physics.add.group({
             defaultKey: 'asteroid',
             maxSize: 20
@@ -86,7 +80,7 @@ export class PlayScene extends Phaser.Scene {
         });
 
         //-------------------------------------
-        // COLISIONES BALAS VS ASTEROIDES
+        // COLISIONES
         //-------------------------------------
         this.physics.add.overlap(
             this.bullets,
@@ -96,9 +90,6 @@ export class PlayScene extends Phaser.Scene {
             this
         );
 
-        //-------------------------------------
-        // COLISIÓN JUGADOR VS ASTEROIDES
-        //-------------------------------------
         this.physics.add.overlap(
             this.player,
             this.asteroids,
@@ -117,9 +108,6 @@ export class PlayScene extends Phaser.Scene {
             { fontSize: '24px', color: '#ffffff' }
         ).setOrigin(0.5, 0);
 
-        //-------------------------------------
-        // CARGAR RECORD DE LOCALSTORAGE
-        //-------------------------------------
         const savedHighScore = localStorage.getItem('highScore');
         this.highScore = savedHighScore ? parseInt(savedHighScore) : 0;
 
@@ -157,11 +145,23 @@ export class PlayScene extends Phaser.Scene {
         this.bullets.children.each((b) => {
             const bullet = b as Phaser.Physics.Arcade.Image;
             if (bullet.active && bullet.y < -10) {
-                bullet.disableBody(true, true);
+                bullet.disableBody(true, true);  // 👈 IMPORTANTE: Desactiva cuerpo y oculta
             }
             return null;
         });
 
+        //-------------------------------------
+        // PAUSAR Y REANUDAR
+        //-------------------------------------
+        if (Phaser.Input.Keyboard.JustDown(this.pauseKey!)) {
+            this.physics.pause();
+            console.log('Juego pausado');
+        }
+
+        if (Phaser.Input.Keyboard.JustDown(this.resumeKey!)) {
+            this.physics.resume();
+            console.log('Juego reanudado');
+        }
     }
 
     //-------------------------------------
@@ -174,10 +174,10 @@ export class PlayScene extends Phaser.Scene {
         ) as Phaser.Physics.Arcade.Image;
 
         if (bullet) {
-            bullet.enableBody(true, bullet.x, bullet.y, true, true); // 👈 ACTIVAR bien
+            bullet.enableBody(true, this.player.x, this.player.y - 20, true, true); // 👈 IMPORTANTE
             bullet.setActive(true);
             bullet.setVisible(true);
-            bullet.body && (bullet.body.velocity.y = -400);
+            (bullet.body as Phaser.Physics.Arcade.Body).velocity.y = -400;
             bullet.setScale(0.1);
         }
     }
@@ -190,9 +190,7 @@ export class PlayScene extends Phaser.Scene {
         const asteroid = this.asteroids.get(x, -50) as Phaser.Physics.Arcade.Image;
 
         if (asteroid) {
-            asteroid.enableBody(true, asteroid.x, asteroid.y, true, true);
-            asteroid.setActive(true);
-            asteroid.setVisible(true);
+            asteroid.enableBody(true, x, -50, true, true);
             asteroid.setVelocityY(100);
             asteroid.setScale(0.2);
         }
@@ -208,15 +206,12 @@ export class PlayScene extends Phaser.Scene {
         const bullet = bulletObj as Phaser.Physics.Arcade.Image;
         const asteroid = asteroidObj as Phaser.Physics.Arcade.Image;
 
-        // Desactivar ambos objetos
-        bullet.disableBody(true, true);
+        bullet.disableBody(true, true);   // 👈 PARA QUE NO SE QUEDE ESTÁTICA
         asteroid.disableBody(true, true);
 
-        // Sumar 1 punto
         this.score += 1;
         this.scoreText.setText('Puntos: ' + this.score);
 
-        // Actualizar récord si es necesario
         if (this.score > this.highScore) {
             this.highScore = this.score;
             this.highScoreText.setText('Record: ' + this.highScore);
@@ -238,5 +233,12 @@ export class PlayScene extends Phaser.Scene {
         asteroid.setTint(0xff0000);
 
         this.scoreText.setText('¡Perdiste! Puntos: ' + this.score);
+
+        this.time.delayedCall(1000, () => {
+            this.scene.start('GameOverScene', {
+                score: this.score,
+                highScore: this.highScore
+            });
+        });
     }
 }
