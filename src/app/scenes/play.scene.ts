@@ -16,6 +16,10 @@ export class PlayScene extends Phaser.Scene {
   // Grupo de balas
   bullets!: Phaser.Physics.Arcade.Group;
 
+  // Grupo de asteroides
+  asteroids!: Phaser.Physics.Arcade.Group;
+
+
   constructor() {
     super('PlayScene'); // Nombre de la escena
   }
@@ -24,6 +28,7 @@ export class PlayScene extends Phaser.Scene {
     // Cargamos las imágenes
     this.load.image('player', 'assets/sprites/player.png');
     this.load.image('bullet', 'assets/sprites/bullet.png');
+    this.load.image('asteroid', 'assets/sprites/asteroid.png');
   }
 
   create(): void {
@@ -56,6 +61,24 @@ export class PlayScene extends Phaser.Scene {
       defaultKey: 'bullet',
       maxSize: 10 // Máximo de 10 balas activas
     });
+
+    // Grupo de asteroides
+this.asteroids = this.physics.add.group({
+    defaultKey: 'asteroid',
+    maxSize: 20
+});
+
+// -------------------------------------
+// CREAR ASTEROIDES CADA 2 SEGUNDOS
+// -------------------------------------
+this.time.addEvent({
+    delay: 2000, // Cada 2000 milisegundos (2 segundos)
+    callback: this.spawnAsteroid,
+    callbackScope: this,
+    loop: true
+  });
+  
+
   }
 
   override update(): void {
@@ -112,4 +135,21 @@ export class PlayScene extends Phaser.Scene {
       console.log('No se pudo crear la bala');
     }
   }
+
+  // -------------------------------------
+// MÉTODO PARA CREAR ASTEROIDES
+// -------------------------------------
+spawnAsteroid(): void {
+    const x = Phaser.Math.Between(50, this.scale.width - 50); // Posición aleatoria
+  
+    const asteroid = this.asteroids.get(x, -50) as Phaser.Physics.Arcade.Image;
+  
+    if (asteroid) {
+      asteroid.setActive(true);
+      asteroid.setVisible(true);
+      asteroid.setVelocityY(100); // Caída hacia abajo
+      asteroid.setScale(0.2);
+    }
+  }
+  
 }
