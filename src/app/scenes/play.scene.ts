@@ -22,43 +22,57 @@ export class PlayScene extends Phaser.Scene {
     }
 
     preload(): void {
-        this.load.image('spaceBackground', 'assets/sprites/spaceBackground.jpg');
+        this.load.image('spaceBackground', 'assets/sprites/spaceBackground.png');
         this.load.image('player', 'assets/sprites/player.png');
         this.load.image('bullet', 'assets/sprites/bullet.png');
         this.load.image('asteroid', 'assets/sprites/asteroid.png');
     }
 
     create(): void {
+        // Resetear puntuaciones al comenzar la partida
+        this.score = 0;
+    
+        // Cargar récord guardado
+        const savedHighScore = localStorage.getItem('highScore');
+        this.highScore = savedHighScore ? parseInt(savedHighScore) : 0;
+    
+        // Fondo
         this.add.image(0, 0, 'spaceBackground').setOrigin(0, 0);
-
+    
+        // Crear el jugador
         this.player = this.physics.add.sprite(
             this.scale.width / 2,
             this.scale.height - 100,
             'player'
         ).setScale(0.5).setCollideWorldBounds(true);
-
+    
+        // Controles
         this.cursors = this.input.keyboard!.createCursorKeys();
         this.spaceKey = this.input.keyboard!.addKey(Phaser.Input.Keyboard.KeyCodes.SPACE);
         this.pauseKey = this.input.keyboard!.addKey(Phaser.Input.Keyboard.KeyCodes.P);
         this.resumeKey = this.input.keyboard!.addKey(Phaser.Input.Keyboard.KeyCodes.R);
-
+    
+        // Grupo de balas
         this.bullets = this.physics.add.group({
             defaultKey: 'bullet',
             maxSize: 10
         });
-
+    
+        // Grupo de asteroides
         this.asteroids = this.physics.add.group({
             defaultKey: 'asteroid',
             maxSize: 20
         });
-
+    
+        // Temporizador para generar asteroides
         this.time.addEvent({
             delay: 2000,
             callback: this.spawnAsteroid,
             callbackScope: this,
             loop: true
         });
-
+    
+        // Colisiones: balas <-> asteroides
         this.physics.add.overlap(
             this.bullets,
             this.asteroids,
@@ -66,7 +80,8 @@ export class PlayScene extends Phaser.Scene {
             undefined,
             this
         );
-
+    
+        // Colisiones: jugador <-> asteroides
         this.physics.add.overlap(
             this.player,
             this.asteroids,
@@ -74,22 +89,21 @@ export class PlayScene extends Phaser.Scene {
             undefined,
             this
         );
-
+    
+        // Mostrar puntuación
         this.scoreText = this.add.text(
             this.scale.width / 2, 20,
             'Puntos: 0',
             { fontSize: '24px', color: '#ffffff' }
         ).setOrigin(0.5, 0);
-
-        const savedHighScore = localStorage.getItem('highScore');
-        this.highScore = savedHighScore ? parseInt(savedHighScore) : 0;
-
+    
         this.highScoreText = this.add.text(
             this.scale.width / 2, 50,
             'Record: ' + this.highScore,
             { fontSize: '20px', color: '#ffff00' }
         ).setOrigin(0.5, 0);
     }
+    
 
     override update(): void {
         if (this.cursors.left!.isDown) {
@@ -131,7 +145,7 @@ export class PlayScene extends Phaser.Scene {
             bullet.enableBody(true, this.player.x, this.player.y - 20, true, true);
             bullet.setActive(true).setVisible(true);
             bullet.body && (bullet.body.velocity.y = -400);
-            bullet.setScale(0.1);
+            bullet.setScale(0.03);
         }
     }
 
@@ -142,7 +156,7 @@ export class PlayScene extends Phaser.Scene {
         if (asteroid) {
             asteroid.setActive(true).setVisible(true);
             asteroid.setVelocityY(100);
-            asteroid.setScale(0.2);
+            asteroid.setScale(0.5);
         }
     }
 
