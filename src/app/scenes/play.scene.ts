@@ -71,7 +71,7 @@ export class PlayScene extends Phaser.Scene {
 
         // --- Generar asteroides periódicamente ---
         this.asteroidTimer = this.time.addEvent({
-            delay: 2000,
+            delay: 1000,
             callback: this.spawnAsteroid,
             callbackScope: this,
             loop: true
