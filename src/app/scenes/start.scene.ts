@@ -78,5 +78,18 @@ export class StartScene extends Phaser.Scene {
     startText.on('pointerout', () => {
       startText.setStyle({ color: '#00ff00' });
     });
+
+    // --- TEXTO DE CONTROLES ---
+    this.add.text(
+      this.scale.width / 2,
+      this.scale.height / 2 + 130,
+      'Controles:\nSpace: disparar\nFlechas: mover\nP: Pausa\nR: Reanudar',
+      {
+        fontSize: '20px',
+        color: '#00ff00',
+        align: 'center'
+      }
+    ).setOrigin(0.5);
+    // --- FIN TEXTO DE CONTROLES ---
   }  
 }
