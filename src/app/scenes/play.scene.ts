@@ -126,8 +126,8 @@ export class PlayScene extends Phaser.Scene {
             this.player.setVelocityX(0);
         }
 
-        // Disparo
-        if (Phaser.Input.Keyboard.JustDown(this.spaceKey!)) {
+        // Disparo (solo si no está en pausa)
+        if (Phaser.Input.Keyboard.JustDown(this.spaceKey!) && !this.physics.world.isPaused) {
             this.shootBullet();
         }
 
