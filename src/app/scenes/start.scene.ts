@@ -18,7 +18,7 @@ export class StartScene extends Phaser.Scene {
     this.add.text(
       this.scale.width / 2,
       this.scale.height / 2 - 150,
-      'Mi Juego Espacial',
+      'Space Defenders',
       {
         fontSize: '32px',
         color: '#ffffff',

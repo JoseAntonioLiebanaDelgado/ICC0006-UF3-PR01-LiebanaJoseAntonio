@@ -11,11 +11,15 @@ export class PlayScene extends Phaser.Scene {
     bullets!: Phaser.Physics.Arcade.Group;
     asteroids!: Phaser.Physics.Arcade.Group;
 
+    asteroidTimer!: Phaser.Time.TimerEvent;
+
     score: number = 0;
     scoreText!: Phaser.GameObjects.Text;
 
     highScore: number = 0;
     highScoreText!: Phaser.GameObjects.Text;
+
+    pauseText!: Phaser.GameObjects.Text;
 
     constructor() {
         super('PlayScene');
@@ -31,48 +35,47 @@ export class PlayScene extends Phaser.Scene {
     create(): void {
         // Resetear puntuaciones al comenzar la partida
         this.score = 0;
-    
-        // Cargar récord guardado
+
         const savedHighScore = localStorage.getItem('highScore');
         this.highScore = savedHighScore ? parseInt(savedHighScore) : 0;
-    
+
         // Fondo
         this.add.image(0, 0, 'spaceBackground').setOrigin(0, 0);
-    
-        // Crear el jugador
+
+        // Jugador
         this.player = this.physics.add.sprite(
             this.scale.width / 2,
             this.scale.height - 100,
             'player'
         ).setScale(0.5).setCollideWorldBounds(true);
-    
+
         // Controles
         this.cursors = this.input.keyboard!.createCursorKeys();
         this.spaceKey = this.input.keyboard!.addKey(Phaser.Input.Keyboard.KeyCodes.SPACE);
         this.pauseKey = this.input.keyboard!.addKey(Phaser.Input.Keyboard.KeyCodes.P);
         this.resumeKey = this.input.keyboard!.addKey(Phaser.Input.Keyboard.KeyCodes.R);
-    
+
         // Grupo de balas
         this.bullets = this.physics.add.group({
             defaultKey: 'bullet',
             maxSize: 10
         });
-    
+
         // Grupo de asteroides
         this.asteroids = this.physics.add.group({
             defaultKey: 'asteroid',
             maxSize: 20
         });
-    
-        // Temporizador para generar asteroides
-        this.time.addEvent({
+
+        // Generar asteroides periódicamente y guardar el evento para poder pausarlo
+        this.asteroidTimer = this.time.addEvent({
             delay: 2000,
             callback: this.spawnAsteroid,
             callbackScope: this,
             loop: true
         });
-    
-        // Colisiones: balas <-> asteroides
+
+        // Colisión balas <-> asteroides
         this.physics.add.overlap(
             this.bullets,
             this.asteroids,
@@ -80,8 +83,8 @@ export class PlayScene extends Phaser.Scene {
             undefined,
             this
         );
-    
-        // Colisiones: jugador <-> asteroides
+
+        // Colisión jugador <-> asteroides
         this.physics.add.overlap(
             this.player,
             this.asteroids,
@@ -89,23 +92,32 @@ export class PlayScene extends Phaser.Scene {
             undefined,
             this
         );
-    
-        // Mostrar puntuación
+
+        // Texto de puntuación
         this.scoreText = this.add.text(
             this.scale.width / 2, 20,
             'Puntos: 0',
             { fontSize: '24px', color: '#ffffff' }
         ).setOrigin(0.5, 0);
-    
+
         this.highScoreText = this.add.text(
             this.scale.width / 2, 50,
             'Record: ' + this.highScore,
             { fontSize: '20px', color: '#ffff00' }
         ).setOrigin(0.5, 0);
+
+        // Texto de pausa (inicialmente invisible)
+        this.pauseText = this.add.text(
+            this.scale.width / 2,
+            this.scale.height / 2,
+            'EN PAUSA',
+            { fontSize: '48px', color: '#ff0000', fontStyle: 'bold' }
+        ).setOrigin(0.5);
+        this.pauseText.setVisible(false);
     }
-    
 
     override update(): void {
+        // Movimiento jugador
         if (this.cursors.left!.isDown) {
             this.player.setVelocityX(-300);
         } else if (this.cursors.right!.isDown) {
@@ -114,10 +126,12 @@ export class PlayScene extends Phaser.Scene {
             this.player.setVelocityX(0);
         }
 
+        // Disparo
         if (Phaser.Input.Keyboard.JustDown(this.spaceKey!)) {
             this.shootBullet();
         }
 
+        // Limpiar balas que se salen de la pantalla
         this.bullets.children.each((b) => {
             const bullet = b as Phaser.Physics.Arcade.Image;
             if (bullet.active && bullet.y < -10) {
@@ -126,12 +140,18 @@ export class PlayScene extends Phaser.Scene {
             return null;
         });
 
+        // Pausar
         if (Phaser.Input.Keyboard.JustDown(this.pauseKey!)) {
             this.physics.pause();
+            this.asteroidTimer.paused = true;
+            this.pauseText.setVisible(true);
         }
 
+        // Reanudar
         if (Phaser.Input.Keyboard.JustDown(this.resumeKey!)) {
             this.physics.resume();
+            this.asteroidTimer.paused = false;
+            this.pauseText.setVisible(false);
         }
     }
 
@@ -181,6 +201,7 @@ export class PlayScene extends Phaser.Scene {
         const asteroid = asteroidObj as Phaser.Physics.Arcade.Image;
 
         this.physics.pause();
+        this.asteroidTimer.paused = true;
         this.player.setTint(0xff0000);
         asteroid.setTint(0xff0000);
 
