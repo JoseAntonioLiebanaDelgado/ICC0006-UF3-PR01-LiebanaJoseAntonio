@@ -5,29 +5,30 @@ import { StartScene } from '../scenes/start.scene';
 import { GameOverScene } from '../scenes/gameover.scene';
 
 @Component({
-  selector: 'app-game',
-  templateUrl: './game.component.html',
-  styleUrls: ['./game.component.scss']
+  selector: 'app-game', // Selector del componente
+  templateUrl: './game.component.html', // HTML asociado
+  styleUrls: ['./game.component.scss'] // Estilos asociados
 })
 export class GameComponent implements OnInit {
 
-  game!: Phaser.Game;
+  game!: Phaser.Game; // Variable para la instancia del juego
 
   constructor() {}
 
   ngOnInit(): void {
+    // Configuración del juego Phaser
     const config: Phaser.Types.Core.GameConfig = {
-      type: Phaser.AUTO,
+      type: Phaser.AUTO, // Usa WebGL o Canvas automáticamente
       width: innerWidth,
       height: innerHeight,
       backgroundColor: '#2222aa',
-      parent: 'game-container',
-      scene: [StartScene, PlayScene, GameOverScene],
+      parent: 'game-container', // ID del div donde se mostrará el juego
+      scene: [StartScene, PlayScene, GameOverScene], // Escenas del juego
       physics: {
-        default: 'arcade'
+        default: 'arcade' // Usa físicas tipo arcade
       }
     };
 
-    this.game = new Phaser.Game(config);
+    this.game = new Phaser.Game(config); // Crear instancia del juego
   }
 }
